@@ -15,6 +15,7 @@ crabs.sort()
 minfuel = 999999999999999999999
 position = 0
 for i in range(crabs[0], crabs[len(crabs)-1]):
+#for i in range(0, 2000): #covers all crab values without having to sort
     fuel = 0
     for j in range(0, len(crabs)):
         fuel += abs(i - crabs[j])
@@ -42,7 +43,20 @@ print("mean: ", average)
 print("median: ", position)
 print("mode: ", mode)
 """
-print("part 1: ", position)
+print("part 1: ", minfuel)
+
+minfuel = 9999999999999999999999999
+position = 0
+for i in range(crabs[0], crabs[len(crabs)-1]):
+    fuel = 0
+    for j in range(0, len(crabs)):
+        n = abs(i - crabs[j])
+        fuel += (n * (n+1))/2 #arithmetic sum
+    if fuel <= minfuel:
+        minfuel = fuel
+        position = i
+
+print("part 2: ", minfuel)
 
 
 
