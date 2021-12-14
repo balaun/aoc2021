@@ -1,0 +1,174 @@
+#advent of code 2021
+#day 12
+#matt balaun (balaun@gmail.com)
+
+class Cave:
+    name=""
+    size=0
+    connections={}
+
+    def __init__(self, name):
+        self.name = name
+        self.connections = {}
+        if name == name.lower():
+            self.size = 0 #for small
+        else:
+            self.size = 1 #for big
+
+#input is a dict of caves, including a "start" and an "end" cave
+#output is a list of comma separated path strings from start to end taking every legal path through the caves
+def traverse_all(caves):
+    retval = list()
+    curpos = caves["start"]
+    endpos = caves["end"]
+    path = list()
+    path.append(curpos.name)
+    queue = list()
+    for k in curpos.connections.keys():
+        queue.append((curpos.name, path, k))
+    
+    while len(queue) > 0: #there are more paths to check
+        #print(len(queue))
+        #print(retval)
+        checkme = queue[0]
+        queue.remove(checkme)
+        curpos = caves[checkme[0]]
+        curpath = checkme[1]
+        curnext = checkme[2]
+        #print("in: ", curpos.name, ", path: ", ','.join(curpath), " next: ", curnext)
+
+        #check first if curpos = "end"
+        if curpos.name == "end":
+            retval.append(','.join(curpath))
+            continue
+        else:
+                
+            #check if next connection is legal (unvisited or big)
+            found = False
+            for c in range(0, len(curpath)):
+                if curnext == curpath[c]:
+                    found = True
+            if (not found) or (caves[curnext].size == 1):
+                newcur = caves[curnext]
+                newpath = list()
+                for c in range(0, len(curpath)):
+                    newpath.append(curpath[c])
+                newpath.append(curnext)
+                for k in newcur.connections.keys():
+                    found = False
+                    for i in range(0, len(queue)):
+                        if (newcur.name, newpath, k) == queue[i]:
+                            found = True
+                    if (not found):
+                        queue.append((newcur.name, newpath, k))
+    #deduplicate the list path
+    rtmp = list()
+    rset = set()
+    for i in range(0, len(retval)):
+        if retval[i] not in rset:
+            rset.add(retval[i])
+            rtmp.append(retval[i])
+    retval = rtmp
+    return retval
+
+def traverse_all_part2(caves):
+    retval = list()
+    curpos = caves["start"]
+    endpos = caves["end"]
+    path = list()
+    path.append(curpos.name)
+    queue = list()
+    small_doubled = False
+    for k in curpos.connections.keys():
+        queue.append((curpos.name, path, k, small_doubled))
+    while len(queue) > 0:
+        checkme = queue[0]
+        queue.remove(checkme)
+        curpos = caves[checkme[0]]
+        curpath = checkme[1]
+        curnext = checkme[2]
+        small_doubled = checkme[3]
+        if curpos.name == "end":
+            retval.append(','.join(curpath))
+            continue
+        else:
+            found = False
+            for c in range(0, len(curpath)):
+                if curnext == curpath[c]:
+                    found = True
+            if (not found) or (caves[curnext].size == 1) or (found and caves[curnext].size == 0 and not small_doubled):
+                newcur = caves[curnext]
+                newpath = list()
+                for c in range(0, len(curpath)):
+                    newpath.append(curpath[c])
+                newpath.append(curnext)
+                new_doubled = False
+                if (found and caves[curnext].size == 0 and not small_doubled):
+                    new_doubled= True
+                for k in newcur.connections.keys():
+                    found = False
+                    for i in range(0, len(queue)):
+                        if (newcur.name, newpath, k) == queue[i]:
+                            found = True
+                    if (not found):
+                        queue.append((newcur.name, newpath, k, new_doubled))
+    
+            """
+            if (curnext not in curpath) or (caves[curnext].size == 1):
+                newcur = caves[curnext]
+                newpath = curpath
+                newpath.append(curnext)
+                for k in newcur.connections.keys():
+                    queue.append((newcur.name, newpath, k))
+            """
+
+    #deduplicate the list path
+    rtmp = list()
+    rset = set()
+    for i in range(0, len(retval)):
+        if retval[i] not in rset:
+            rset.add(retval[i])
+            rtmp.append(retval[i])
+    retval = rtmp
+    return retval
+
+caves = {}
+data = list()
+f = open('input', 'r')
+for line in f:
+    data.append(line.rstrip())
+
+#build dict of caves from input
+for line in data:
+    tmp = line.split('-')
+    if tmp[0] not in caves.keys():
+        caves[tmp[0]] = Cave(tmp[0])
+    if tmp[1] not in caves.keys():
+        caves[tmp[1]] = Cave(tmp[1])
+    #make sure they connect to eachother
+    if tmp[1] not in caves[tmp[0]].connections.keys():
+        caves[tmp[0]].connections[tmp[1]] = caves[tmp[1]]
+    if tmp[0] not in caves[tmp[1]].connections.keys():
+        caves[tmp[1]].connections[tmp[0]] = caves[tmp[0]]
+
+for k in caves.keys():
+    for k2 in caves[k].connections.keys():
+        if k == k2:
+            caves[k].connections.pop(k2)
+        if k2 == "start":
+            caves[k].connections.pop(k2)
+        if k == "end":
+            caves[k].connections.pop(k2)
+
+for k in caves.keys():
+    print("k: ", k, " name: ", caves[k].name, " size: ", caves[k].size, " connections: ", ','.join(caves[k].connections.keys()))
+
+print(caves)
+paths = traverse_all(caves)
+print("part1: ", len(paths))
+#print(paths)
+paths = traverse_all_part2(caves)
+print("part2: ", len(paths))
+print(paths)
+
+
